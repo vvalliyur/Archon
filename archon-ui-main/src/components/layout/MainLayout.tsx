@@ -133,9 +133,8 @@ export function MainLayout({ children, className }: MainLayoutProps) {
       {/* TEMPORARY: Show backend startup error using old component */}
       {backendStartupFailed && <BackendStartupError />}
 
-      {/* Fixed full-page background - grid pattern on dark background */}
+      {/* Fixed full-page background */}
       <div className="fixed inset-0 bg-white dark:bg-black pointer-events-none -z-10" />
-      <div className="fixed inset-0 neon-grid pointer-events-none z-0" />
 
       {/* Floating Navigation */}
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">

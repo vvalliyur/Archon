@@ -116,22 +116,6 @@
   }
 }
 
-@layer components {
-  /* Grid pattern for background (used in MainLayout) */
-  .neon-grid {
-    background-image:
-      linear-gradient(to right, #a855f720 1px, transparent 1px),
-      linear-gradient(to bottom, #a855f720 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-
-  .dark .neon-grid {
-    background-image:
-      linear-gradient(to right, #a855f730 1px, transparent 1px),
-      linear-gradient(to bottom, #a855f730 1px, transparent 1px);
-  }
-}
-
 /* Hide scrollbar but keep scroll functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
