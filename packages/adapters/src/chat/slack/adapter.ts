@@ -112,6 +112,47 @@ export class SlackAdapter implements IPlatformAdapter {
   }
 
   /**
+   * Post a transient "thinking" acknowledgment so users see the bot received
+   * their message while the workflow runs. Returns the channel:ts of the
+   * posted message so callers can delete or update it later if desired.
+   */
+  async sendThinkingAck(channelId: string): Promise<string | null> {
+    const [channel, threadTs] = channelId.includes(':')
+      ? channelId.split(':')
+      : [channelId, undefined];
+
+    try {
+      const result = await this.app.client.chat.postMessage({
+        channel,
+        thread_ts: threadTs,
+        text: ':hourglass_flowing_sand: _Archon is thinking…_',
+      });
+      if (result.ts) {
+        return `${channel}:${result.ts}`;
+      }
+      return null;
+    } catch (error) {
+      getLog().warn({ err: error, channel, threadTs }, 'slack.thinking_ack_failed');
+      return null;
+    }
+  }
+
+  /**
+   * Delete a previously-posted message (used to clear the thinking ack once
+   * the real response is ready). Best-effort — failures are logged but not
+   * thrown so they never block the actual reply.
+   */
+  async deleteMessage(channelTs: string): Promise<void> {
+    if (!channelTs.includes(':')) return;
+    const [channel, ts] = channelTs.split(':');
+    try {
+      await this.app.client.chat.delete({ channel, ts });
+    } catch (error) {
+      getLog().warn({ err: error, channel, ts }, 'slack.delete_message_failed');
+    }
+  }
+
+  /**
    * Get the Bolt App instance
    */
   getApp(): App {
