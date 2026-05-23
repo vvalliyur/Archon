@@ -446,8 +446,10 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         }
 
         // Post an immediate "thinking" acknowledgment so the user sees feedback
-        // while the workflow runs. Cleared once the real response is posted.
-        const ackChannelTs = await slackAdapter.sendThinkingAck(conversationId);
+        // while the workflow runs. sendMessage will chat.update this into the
+        // real reply; clearPendingAck in the finally only fires if no reply
+        // was ever sent (workflow errored / produced no output).
+        await slackAdapter.sendThinkingAck(conversationId);
 
         // Fire-and-forget: handler returns immediately, processing happens async
         lockManager
@@ -459,9 +461,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
                 isolationHints: { workflowType: 'thread', workflowId: conversationId },
               });
             } finally {
-              if (ackChannelTs) {
-                await slackAdapter.deleteMessage(ackChannelTs);
-              }
+              await slackAdapter.clearPendingAck(conversationId);
             }
           })
           .catch(createMessageErrorHandler('Slack', slackAdapter, conversationId));
