@@ -445,14 +445,24 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
           parentConversationId = slackAdapter.getParentConversationId(event) ?? undefined;
         }
 
+        // Post an immediate "thinking" acknowledgment so the user sees feedback
+        // while the workflow runs. Cleared once the real response is posted.
+        const ackChannelTs = await slackAdapter.sendThinkingAck(conversationId);
+
         // Fire-and-forget: handler returns immediately, processing happens async
         lockManager
           .acquireLock(conversationId, async () => {
-            await handleMessage(slackAdapter, conversationId, content, {
-              threadContext,
-              parentConversationId,
-              isolationHints: { workflowType: 'thread', workflowId: conversationId },
-            });
+            try {
+              await handleMessage(slackAdapter, conversationId, content, {
+                threadContext,
+                parentConversationId,
+                isolationHints: { workflowType: 'thread', workflowId: conversationId },
+              });
+            } finally {
+              if (ackChannelTs) {
+                await slackAdapter.deleteMessage(ackChannelTs);
+              }
+            }
           })
           .catch(createMessageErrorHandler('Slack', slackAdapter, conversationId));
       });
